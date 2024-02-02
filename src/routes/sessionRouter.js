@@ -4,6 +4,8 @@ import { creaHash } from '../utils.js';
 import { validaPassword } from '../utils.js';
 // import crypto from 'crypto'
 import passport from 'passport';
+import { Session } from 'express-session';
+import { SessionsController } from '../controllers/session.controller.js';
 
 export const router = Router()
 
@@ -33,28 +35,13 @@ router.get('/errorLogin', (req, res) => {
     return res.redirect('/login?error=Error en el proceso de login')
 })
 
-router.post('/login', passport.authenticate('login', { failureRedirect: '/api/sessions/errorLogin' }), async (req, res) => {
-
-    console.log(req.user)
-    
-    req.session.usuario = {
-        nombre: req.user.first_name, email: req.user.email, rol: req.user.rol
-    }
-
-    res.redirect(`/realtimeproducts?mensajeBienvenida=Bienvenido ${req.user.first_name}, su rol es ${req.user.rol}`)
-
-})
+router.post('/login', passport.authenticate('login', { failureRedirect: '/api/sessions/errorLogin' }), SessionsController.login)
 
 router.get('/errorRegistro', (req, res) => {
     return res.redirect('/register?error=Error en el proceso de registro')
 })
 
-router.post('/register', passport.authenticate('registro', { failureRedirect: '/api/sessions/errorRegistro' }), async (req, res) => {
-
-    let { email } = req.body
-
-    res.redirect(`/login?mensaje=Usuario ${email}registrado correctamente`)
-})
+router.post('/register', passport.authenticate('registro', { failureRedirect: '/api/sessions/errorRegistro' }), SessionsController.register)
 
 router.get('/logout', (req, res) => {
     req.session.destroy(error => {
