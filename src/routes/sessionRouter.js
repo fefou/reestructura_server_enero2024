@@ -1,10 +1,10 @@
-import { Router } from 'express';
-import { usuariosModelo } from '../dao/models/users.model.js';
-import { creaHash } from '../utils.js';
-import { validaPassword } from '../utils.js';
+// import { usuariosModelo } from '../dao/models/users.model.js';
+// import { creaHash } from '../utils.js';
+// import { validaPassword } from '../utils.js';
 // import crypto from 'crypto'
+// import { Session } from 'express-session';
+import { Router } from 'express';
 import passport from 'passport';
-import { Session } from 'express-session';
 import { SessionsController } from '../controllers/session.controller.js';
 
 export const router = Router()
@@ -31,23 +31,12 @@ router.get('/errorGithub', (req, res) => {
     });
 })
 
-router.get('/errorLogin', (req, res) => {
-    return res.redirect('/login?error=Error en el proceso de login')
-})
+router.get('/errorLogin', SessionsController.errorLogin)
 
 router.post('/login', passport.authenticate('login', { failureRedirect: '/api/sessions/errorLogin' }), SessionsController.login)
 
-router.get('/errorRegistro', (req, res) => {
-    return res.redirect('/register?error=Error en el proceso de registro')
-})
+router.get('/errorRegistro', SessionsController.errorRegistro)
 
 router.post('/register', passport.authenticate('registro', { failureRedirect: '/api/sessions/errorRegistro' }), SessionsController.register)
 
-router.get('/logout', (req, res) => {
-    req.session.destroy(error => {
-        if (error) {
-            return res.redirect('/?error=Error al cerrar sesión')
-        }
-        res.redirect('/login')
-    })
-})
+router.get('/logout', SessionsController.logout)
