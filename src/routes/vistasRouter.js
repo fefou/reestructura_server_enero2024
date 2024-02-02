@@ -11,34 +11,31 @@ router.get("/", (req, res) => {
 });
 
 // ------------ AUTH ------------
-const auth= (req, res, next) => {
-if(!req.session.usuario){
-  res.redirect('/login')
-}
-  next()
-}
-
+const auth = (req, res, next) => {
+  if (!req.session.usuario) {
+    res.redirect("/login");
+  }
+  next();
+};
 // ------------ AUTH ------------
 
-
 // ------------ PRODUCTOS ------------
-router.get("/realtimeproducts",auth, async (req, res) => {
-
-  let {mensajeBienvenida} = req.query
-  let pagina = 1
+router.get("/realtimeproducts", auth, async (req, res) => {
+  let { mensajeBienvenida } = req.query;
+  let pagina = 1;
   if (req.query.pagina) {
-    pagina = Number(req.query.pagina)
+    pagina = Number(req.query.pagina);
   }
 
-  let limite
+  let limite;
   if (!req.query.limit) {
-    limite = 10
+    limite = 10;
   } else {
-    limite = Number(req.query.limit)
+    limite = Number(req.query.limit);
   }
 
   let category = req.query.category || null;
-  let sort = req.query.sort || 'asc';
+  let sort = req.query.sort || "asc";
 
   let filter = {};
   if (category) {
@@ -47,37 +44,52 @@ router.get("/realtimeproducts",auth, async (req, res) => {
 
   let products;
   try {
-    products = await productsModelo.paginate(filter, { lean: true, page: pagina, limit: limite, sort: { price: sort } });
+    products = await productsModelo.paginate(filter, {
+      lean: true,
+      page: pagina,
+      limit: limite,
+      sort: { price: sort },
+    });
 
     let { totalPages, hasNextPage, hasPrevPage, prevPage, nextPage } = products;
 
-    console.log(products)
+    console.log(products);
 
-    res.status(200).render("productos", { products: products.docs, totalPages, hasNextPage, hasPrevPage, prevPage, nextPage, limit: limite, category, sort, mensajeBienvenida});
-
+    res
+      .status(200)
+      .render("productos", {
+        products: products.docs,
+        totalPages,
+        hasNextPage,
+        hasPrevPage,
+        prevPage,
+        nextPage,
+        limit: limite,
+        category,
+        sort,
+        mensajeBienvenida,
+      });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-router.get('/realtimeproducts/:pid', auth, async (req, res) => {
+router.get("/realtimeproducts/:pid", auth, async (req, res) => {
   const { pid } = req.params;
 
   try {
     const product = await productsModelo.findById(pid).lean();
 
     if (!product) {
-      return res.status(404).json({ message: 'Producto no encontrado' });
+      return res.status(404).json({ message: "Producto no encontrado" });
     }
 
-    res.status(200).render('product', { product });
+    res.status(200).render("product", { product });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 // ------------ PRODUCTOS ------------
-
-
 
 //  ------------ CHAT ------------
 
@@ -85,7 +97,6 @@ router.get("/chat", auth, (req, res) => {
   res.status(200).render("chat");
 });
 //  ------------ CHAT ------------
-
 
 // ------------ CARRITOS ------------
 router.get("/carts", auth, async (req, res) => {
@@ -103,17 +114,20 @@ router.get("/carts", auth, async (req, res) => {
   }
 });
 
-router.get('/carts/:cid',auth, async (req, res) => {
+router.get("/carts/:cid", auth, async (req, res) => {
   const { cid } = req.params;
 
   try {
-    const cart = await cartsModelo.findById(cid).populate('products.product').lean();
+    const cart = await cartsModelo
+      .findById(cid)
+      .populate("products.product")
+      .lean();
 
     if (!cart) {
-      return res.status(404).json({ message: 'Carrito no encontrado' });
+      return res.status(404).json({ message: "Carrito no encontrado" });
     }
 
-    res.status(200).render('cart', { cart });
+    res.status(200).render("cart", { cart });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -121,9 +135,8 @@ router.get('/carts/:cid',auth, async (req, res) => {
 
 // ------------ CARRITO ------------
 
-
 //  ------------ AGREGAR AL CARRITO ------------
-router.post('/carts/:cid/products/:pid', auth, async (req, res) => {
+router.post("/carts/:cid/products/:pid", auth, async (req, res) => {
   const { cid, pid } = req.params;
   const { quantity } = req.body;
 
@@ -132,17 +145,19 @@ router.post('/carts/:cid/products/:pid', auth, async (req, res) => {
     const product = await productsModelo.findById(pid);
 
     if (!cart || !product) {
-      return res.status(404).json({ message: 'Carrito o producto no encontrado' });
+      return res
+        .status(404)
+        .json({ message: "Carrito o producto no encontrado" });
     }
 
     cart.products.push({
       product: pid,
-      quantity: quantity
+      quantity: quantity,
     });
 
     await cart.save();
 
-    res.redirect('/carts/' + cid);
+    res.redirect("/carts/" + cid);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -150,32 +165,29 @@ router.post('/carts/:cid/products/:pid', auth, async (req, res) => {
 
 // ------------ AGREGAR AL CARRITO ------------
 
-
 // ------------ LOGIN ------------
-router.get('/login', (req, res) => {
+router.get("/login", (req, res) => {
+  let { error, mensaje } = req.query;
 
-  let {error, mensaje}=req.query
-
-  res.setHeader('Content-Type', 'text/html');
-  res.status(200).render('login', {error,mensaje});
+  res.setHeader("Content-Type", "text/html");
+  res.status(200).render("login", { error, mensaje });
 });
 // ------------ LOGIN ------------
-
 
 // ------------ REGISTRO ------------
-router.get('/register', (req, res) => {
+router.get("/register", (req, res) => {
+  let { error } = req.query;
 
-  let {error}=req.query
-
-  res.setHeader('Content-Type', 'text/html');
-  res.status(200).render('register',{error});
+  res.setHeader("Content-Type", "text/html");
+  res.status(200).render("register", { error });
 });
+// ------------ REGISTRO ------------
+
 
 // ------------ PERFIL ------------
-router.get('/perfil', auth, (req, res) => {
+router.get("/perfil", auth, (req, res) => {
+  let usuario = req.session.usuario;
 
-  let usuario=req.session.usuario
-
-  res.setHeader('Content-Type', 'text/html');
-  res.status(200).render('perfil', {usuario});
+  res.setHeader("Content-Type", "text/html");
+  res.status(200).render("perfil", { usuario });
 });
